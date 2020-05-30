@@ -9,13 +9,20 @@ class CFNode:
         self.boolean = boolean
         self.children = []
 
-    def to_string(self):
-        return str((self.branch_number, self.boolean))
+    def get_key(self):
+        return (self.branch_number, self.boolean)
 
+    # Except root
     def print_recursive(self, indent):
-        print('  ' * indent + self.to_string())
         for child in self.children:
+            print('  ' * indent + str(child.get_key()))
             child.print_recursive(indent + 1)
+
+    # Except root
+    def store_recursive(self, cf_dict):
+        for child in self.children:
+            cf_dict[child.get_key()] = None
+            child.store_recursive(cf_dict)
 
 class CFPathFind:
     def _find(self, node, target_branch_number, target_boolean):
@@ -48,14 +55,10 @@ class CodeInjectionTreeWalk(astor.TreeWalk):
         self.cfg_stack = [self.cfg]
 
     def _code_inject(self, node, branch_number):
-        op_name = ''
-        lhs = ''
-        rhs = ''
-
         if not hasattr(node, 'left') or not hasattr(node, 'comparators'):
             op_name = ast.Eq.__name__
             lhs = 'True'
-            rhs = astor.to_source(node).rstrip()
+            rhs = 'bool({})'.format(astor.to_source(node).rstrip())
 
         else:
             op_name = type(node.ops[0]).__name__
@@ -63,7 +66,7 @@ class CodeInjectionTreeWalk(astor.TreeWalk):
             rhs = astor.to_source(node.comparators[0]).rstrip()
 
         return ast.parse(
-            'hook.test_eval({}, {}, {}, {})'.format(
+            "hook_pred.eval_predicate({}, '{}', {}, {})".format(
                 branch_number, op_name, lhs, rhs), 
             '', 'eval').body
 
@@ -121,7 +124,11 @@ class FunParse:
         code_injection_walk = CodeInjectionTreeWalk()
         code_injection_walk.walk(self.fun_node)
         self.cfg = code_injection_walk.cfg
-        self.number_branches = code_injection_walk.branch_number
+        
+        self.cf_input = {}
+        self.cfg.store_recursive(self.cf_input)
+
+        self.whole_source = compile(self.whole_ast, '', 'exec')
 
     def get_target_path(self, target_branch_number, target_boolean):
         return CFPathFind().find(self.cfg, target_branch_number, target_boolean)
@@ -133,9 +140,12 @@ if __name__ == "__main__":
     for node in aa.body:
         if isinstance(node, ast.FunctionDef) and node.name == sys.argv[2]:
             fp = FunParse(aa, node.name)
+            print(astor.to_source(fp.whole_ast))
             fp.cfg.print_recursive(0)
-            for n in fp.get_target_path(4, True):
-                print(n.to_string())
+            for n in fp.cf_input:
+                print(n)
+            # for n in fp.get_target_path(5, True):
+            #     print(n.get_key())
     
 
 

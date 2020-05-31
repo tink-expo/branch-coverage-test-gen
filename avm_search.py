@@ -1,10 +1,12 @@
 import random
 import function_eval
+import copy
 
 # Reference : avmf
 class AvmSearch:
     def __init__(self, fun_obj, target_branch_number, target_boolean,
             random_range, search_max_iter=100, optimize_max_iter=100):
+        random.seed(0)
         self.fun_num_args = fun_obj.num_args
         self.fun_eval = function_eval.FunctionEval(fun_obj, target_branch_number, target_boolean)
         self.search_max_iter = search_max_iter
@@ -26,30 +28,38 @@ class AvmSearch:
         x = vector[vector_idx]
         fitness = self._eval_input_fitness(vector, vector_idx, x)
 
-        if fitness == 0:
+        if fitness.is_zero():
             return vector, fitness
 
         while True:
             fitness_decr = self._eval_input_fitness(vector, vector_idx, x - 1)
             fitness_incr = self._eval_input_fitness(vector, vector_idx, x + 1)
 
-            print("26", x, fitness, fitness_decr, fitness_incr)
+            # fitness.print_all()
+            # fitness_decr.print_all()
+            # fitness_incr.print_all()
+            # print('-' * 100)
 
             if fitness <= fitness_decr and fitness <= fitness_incr:
                 break
 
             k = 1 if fitness_decr > fitness_incr else -1
-            x = vector[vector_idx]
             while True:
                 fitness_next = self._eval_input_fitness(vector, vector_idx, x + k)
+                # print(x, k)
+                # fitness.print_all()
+                # fitness_next.print_all()
+                # print('=' * 100)
 
                 if fitness_next >= fitness:
+                    # print(x, k)
+                    # print('-' * 100)
                     break
                 else:
                     x = x + k
                     k = 2 * k
-                    fitness = fitness_next
-
+                    fitness = copy.copy(fitness_next)
+        # print('=' * 100)
         vector[vector_idx] = x
         return vector, fitness
 
@@ -59,7 +69,7 @@ class AvmSearch:
         for i in range(max(len(vector), self.search_max_iter)):
             vector_idx = i % len(vector)
             vector, fitness = self._variable_search(vector, vector_idx)
-            if fitness == 0:
+            if fitness.is_zero():
                 break
 
         return vector, fitness
@@ -70,9 +80,9 @@ class AvmSearch:
 
         for _ in range(self.optimize_max_iter):
             vector, fitness = self._alternating_variable_search(self._get_random_vector())
-            if fitness == 0:
+            if fitness.is_zero():
                 break
 
-        return vector, fitness
+        return vector, fitness.get_value()
         
             

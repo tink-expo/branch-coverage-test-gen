@@ -13,7 +13,7 @@ if __name__ == "__main__":
             print("<{}>".format(node.name))
             for cf_key in fun_obj.cf_input.keys():
                 if fun_obj.cf_input[cf_key] is None:
-                    avm_obj = AvmSearch(fun_obj, *cf_key, random_range)
+                    avm_obj = AvmSearch(fun_obj, *cf_key, random_range, search_max_iter=100, optimize_max_iter=100)
                     vec, fit = avm_obj.optimize()
                     print(cf_key, vec, fit)
                 else:

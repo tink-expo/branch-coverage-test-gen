@@ -99,7 +99,7 @@ class CodeInjectionTreeWalk(astor.TreeWalk):
 
 
     def pre_orelse_name(self):
-        if isinstance(self.parent, ast.If) and len(self.cur_node) > 0:
+        if isinstance(self.parent, ast.If) or isinstance(self.parent, ast.While):
             assert(len(self.cfg_stack) > 1)
             new_cfg_node = CFNode(self.cfg_stack[-1].branch_number, False)
 
@@ -109,11 +109,15 @@ class CodeInjectionTreeWalk(astor.TreeWalk):
             self.cfg_stack.append(new_cfg_node)
 
 
-class FunParse:
+class FunctionModule:
     def __init__(self, original_ast, target_fun_name):
         self.whole_ast = copy.deepcopy(original_ast)
-
         self.fun_node = None
+        self.num_args = 0
+        self.cfg = None
+        self.cf_input = {}
+        self.whole_source = ''
+
         for node in ast.walk(self.whole_ast):
             if isinstance(node, ast.FunctionDef) and node.name == target_fun_name:
                 self.fun_node = node
@@ -121,11 +125,14 @@ class FunParse:
         if self.fun_node is None:
             raise ValueError("function {} is undefined.".format(target_fun_name))
 
+        self.num_args = len(self.fun_node.args.args)
+        if self.num_args == 0:
+            raise ValueError("Function definition with zero arguments.") 
+
         code_injection_walk = CodeInjectionTreeWalk()
         code_injection_walk.walk(self.fun_node)
         self.cfg = code_injection_walk.cfg
         
-        self.cf_input = {}
         self.cfg.store_recursive(self.cf_input)
 
         self.whole_source = compile(self.whole_ast, '', 'exec')
@@ -139,7 +146,7 @@ if __name__ == "__main__":
     aa = astor.code_to_ast.parse_file(sys.argv[1])
     for node in aa.body:
         if isinstance(node, ast.FunctionDef) and node.name == sys.argv[2]:
-            fp = FunParse(aa, node.name)
+            fp = FunctionModule(aa, node.name)
             print(astor.to_source(fp.whole_ast))
             fp.cfg.print_recursive(0)
             for n in fp.cf_input:

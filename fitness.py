@@ -2,9 +2,11 @@ import ast
 import astor
 import copy
 import sys
+import warnings
+import itertools
 from typedef import FailFitnessInfo, SuccessFitnessInfo
 
-def get_target_fun(whole_ast, fun_name=None):
+def get_target_fun_node(whole_ast, fun_name=None):
     for node in ast.walk(whole_ast):
         if type(node) == ast.FunctionDef and (fun_name is None or node.name == fun_name):
             return node
@@ -59,7 +61,8 @@ def transform_path_nodes(fun_node, path_list):
                     ops=[ast.NotEq()],
                     comparators=[ast.Num(n=0)])
             else:
-                raise ValueError("Unsupported format of predicate.")
+                warnings.warn("Unsupported predicate format detected.", Warning)
+                return ast_list_idx
 
             l_eval_id = "l_eval_{}".format(path_list_idx)
             r_eval_id = "r_eval_{}".format(path_list_idx)
@@ -110,20 +113,20 @@ def transform_path_nodes(fun_node, path_list):
             ))
             ast_list_idx += 1
 
-            assert(ast_list[ast_list_idx] == path_node)
+            assert(ast_list[ast_list_idx] is path_node)
             
             path_node.test.left = ast.Name(id=l_eval_id)
             path_node.test.comparators[0] = ast.Name(id=r_eval_id)
             return ast_list_idx
 
         def generic_visit(self, node):
-            for field, val in ast.iter_fields(node):
+            for _, val in ast.iter_fields(node):
                 if isinstance(val, list):
                     val_idx = 0
                     while (val_idx < len(val)):
                         item = val[val_idx]
                         if isinstance(item, ast.AST):
-                            if self.path_list_idx < len(path_list) and item == path_list[self.path_list_idx][0]:
+                            if self.path_list_idx < len(path_list) and item is path_list[self.path_list_idx][0]:
                                 val_idx = self.pre_insert(val, val_idx, path_list, self.path_list_idx)
                                 self.path_list_idx += 1
                             self.visit(item)
@@ -135,35 +138,40 @@ def transform_path_nodes(fun_node, path_list):
     visitor.visit(fun_node)
 
 
+def transform_for_fitness(whole_ast, target_fun_name, target_branch, target_bool):
+    new_ast = copy.deepcopy(whole_ast)
+    target_fun_node = get_target_fun_node(new_ast, target_fun_name)
+    assert(target_fun_node is not None)
+
+    target_path = get_target_path(target_fun_node, target_brach, target_bool)
+    transform_path_nodes(target_fun_node, target_path)
+    return new_ast
+
+    
+def cover_branches(whole_ast, target_fun_node):
+    num_if_nodes = 0
+    for node in ast.walk(target_fun_node):
+        if isinstance(node, ast.If):
+            num_if_nodes += 1
+    
+    for target_brach, target_bool in itertools.product(range(1, num_if_nodes + 1), (True, False)):
+        # TODO: Optimize here 
+        # (Redundant node insertion for 2 target bools -> only single True/False is different)
+        transformed_ast = transform_for_fitness
+            (whole_ast, target_fun_node.name,
+            target_brach, target_bool)
+        print(astor.to_source(transformed_ast))  
+
 def main(argv):
     if len(argv) <= 1:
         raise ValueError("File name argument missing.")
 
     file_path = argv[1]
     whole_ast = astor.code_to_ast.parse_file(file_path)
-    target_fun = get_target_fun(whole_ast, argv[2] if len(argv) > 2 else None)
-
-    # print(astor.dump_tree(target_fun))
-
-    # print("-" * 50)
-
-    target_path = get_target_path(target_fun, 2, False)
-    for p, b in target_path:
-        print(ast.dump(p.test.comparators[0]))
-        print(b)
-        print()
-
-    transform_path_nodes(target_fun, target_path)
-    print(astor.to_source(whole_ast))
-
-    # if_node = fun_body[1]
-    # predicate = if_node.test
-    # predicate_result_id = 'predicate_result_{}'.format(1)
-    # fun_body.insert(1, ast.Assign(
-    #         targets=[ast.Name(id=predicate_result_id)], value=predicate))
-    # if_node.test = ast.Name(id=predicate_result_id)
-
-    # print(astor.to_source(whole_ast))
+    for item in whole_ast.body:
+        if isinstance(item, ast.FunctionDef):
+            print(item.name)
+            cover_branches(whole_ast, item)
 
 
 if __name__ == "__main__":

@@ -3,5 +3,4 @@
 cs453-SBST-master
 py-feat-test
 **/__pycache__
-sample*.py
-target*.py
+/*_test.py

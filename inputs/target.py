@@ -15,7 +15,7 @@ def f(x, y):
             if x < 5:  # Impossible to cover True branch of this statement.
                 pass
     if x == 60:
-        pass
+        raise ValueError("VALUE_ERROR")
 
     if x > 70:
         if copy.copy(True):  # Impossible to cover False branch of this statement.

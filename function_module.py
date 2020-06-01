@@ -171,7 +171,7 @@ class FunctionModule:
         return '\n'.join(result_list)
 
     def get_cfg_string_with_cf_input(self):
-        result_list = [' *\n']
+        result_list = [' *']
         self.cfg.get_string_with_cf_dict_recursive(self.cf_input, '', result_list)
         return '\n'.join(result_list)
 

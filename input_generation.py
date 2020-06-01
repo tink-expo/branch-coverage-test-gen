@@ -9,13 +9,18 @@ from avm_search import AvmSearch
 class InputGeneration:
     def __init__(self, file_path, 
             avm_random_range, avm_variable_max_iter, avm_optimize_max_iter):
-        self.whole_ast = astor.code_to_ast.parse_file(file_path)
-        self.avm_random_range = avm_random_range
-        self.avm_variable_max_iter = avm_variable_max_iter
-        self.avm_optimize_max_iter = avm_optimize_max_iter
+        try:
+            self.whole_ast = astor.code_to_ast.parse_file(file_path)
+        except FileNotFoundError as e:
+            print(e)
+            exit(0)
+        else:
+            self.avm_random_range = avm_random_range
+            self.avm_variable_max_iter = avm_variable_max_iter
+            self.avm_optimize_max_iter = avm_optimize_max_iter
 
-        self.module_name = '.'.join(file_path.replace('/', '.').split('.')[:-1])
-        self.fun_name_input = {}
+            self.module_name = '.'.join(file_path.replace('/', '.').split('.')[:-1])
+            self.fun_name_input = {}
 
     def _fun_input_generate(self, fun_node):
         assert(isinstance(fun_node, ast.FunctionDef))
@@ -57,7 +62,7 @@ class InputGeneration:
         else:
             sys.stdout = original_stdout
             if fun_obj_genned.get_num_branches() == 0:
-                print('No branch detected for function {}'.format(fun_node.name))
+                print('No branch detected for function \'{}\'.'.format(fun_node.name))
             else:
                 if print_cf_input:
                     print(fun_obj_genned.get_cf_input_string_sorted_items())
@@ -72,9 +77,15 @@ class InputGeneration:
         for node in self.whole_ast.body:
             if isinstance(node, ast.FunctionDef) and node.name == fun_name:
                 self.fun_node_input_generate(node, print_cf_input, print_cfg, write_testfile)
+                print('=' * 60)
                 break
         else:
             raise ValueError('{} is undefined.'.format(fun_name))
+
+        if write_testfile:
+            testfile_name = self.write_testfile_from_input()
+            print('Test file generated. Run \'$ pytest {}\' to run the tests.'.format(testfile_name))
+        print()
 
     def all_fun_input_generate(self, print_cf_input, print_cfg, write_testfile):
         fun_count = 0
@@ -89,4 +100,5 @@ class InputGeneration:
         if write_testfile:
             testfile_name = self.write_testfile_from_input()
             print('Test file generated. Run \'$ pytest {}\' to run the tests.'.format(testfile_name))
+        print()
             

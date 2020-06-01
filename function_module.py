@@ -18,35 +18,34 @@ class CFNode:
         return "{}{}".format(cf_key[0], 'T' if cf_key[1] else 'F')
 
     # Except root
-    def store_recursive(self, cf_dict):
-        for child in self.children:
-            cf_dict[child.get_key()] = None
-            child.store_recursive(cf_dict)
-
-    # Except root
     def get_string_recursive(self, indent, result):
         for child in self.children:
             result.append('  ' * indent + str(child.get_key()))
             child.get_string_recursive(indent + 1, result)
 
     # Except root
-    def get_string_with_cf_dict_recursive(self, cf_dict, front_string, result):
+    def get_string_with_cf_dict_recursive(self, cf_dict, bnum_type, front_string, result):
         for i in range(len(self.children)):
             add_string = ' |-- ' if i < len(self.children) - 1 else ' +-- '
             add_front_string = ' |   ' if i < len(self.children) - 1 else '     '
             child = self.children[i]
-            result.append(front_string + add_string + str(child._get_key_string_with_cf_dict(cf_dict)) + '\n')
-            child.get_string_with_cf_dict_recursive(cf_dict, front_string + add_front_string, result)
+            result.append(front_string + add_string + str(child._get_key_string_with_cf_dict(cf_dict, bnum_type)) + '\n')
+            child.get_string_with_cf_dict_recursive(cf_dict, bnum_type, front_string + add_front_string, result)
 
     def _get_key_string(self):
         return CFNode.get_key_string(self.get_key())
 
-    def _get_key_string_with_cf_dict(self, cf_dict):
+    def _get_key_string_with_cf_dict(self, cf_dict, bnum_type):
         cf_dict_val = cf_dict.get(self.get_key())
         if cf_dict_val is not None:
-            return termcolor.colored(self._get_key_string(), 'green') + ': ' + str(cf_dict_val)
+            return '{} <{}>: {}'.format(
+                    termcolor.colored(self._get_key_string(), 'green'),
+                    bnum_type[self.branch_number].__name__,
+                    cf_dict_val)
         else:
-            return termcolor.colored(self._get_key_string(), 'red')
+            return '{} <{}>'.format(
+                    termcolor.colored(self._get_key_string(), 'red'),
+                    bnum_type[self.branch_number].__name__)
     
 
 class CFPathFind:
@@ -78,6 +77,7 @@ class CodeInjectionTreeWalk(astor.TreeWalk):
         self.branch_number = 0
         self.cfg = CFNode(self.branch_number, True)
         self.cfg_stack = [self.cfg]
+        self.bnum_type = {}
 
     def _code_inject(self, node, branch_number):
         if not hasattr(node, 'left') or not hasattr(node, 'comparators'):
@@ -95,8 +95,9 @@ class CodeInjectionTreeWalk(astor.TreeWalk):
                 branch_number, op_name, lhs, rhs), 
             '', 'eval').body
 
-    def _pre_Conditional(self):
+    def _pre_IfOrWhile(self):
         self.branch_number += 1
+        self.bnum_type[self.branch_number] = type(self.cur_node)
 
         self.cur_node.test = self._code_inject(self.cur_node.test, self.branch_number)
 
@@ -106,21 +107,21 @@ class CodeInjectionTreeWalk(astor.TreeWalk):
 
         self.cfg_stack.append(new_cfg_node)
 
-    def _post_Conditional(self):
+    def _post_IfOrWhile(self):
         assert(len(self.cfg_stack) > 0)
         self.cfg_stack.pop()
 
     def pre_If(self):
-        self._pre_Conditional()
+        self._pre_IfOrWhile()
 
     def pre_While(self):
-        self._pre_Conditional()
+        self._pre_IfOrWhile()
 
     def post_If(self):
-        self._post_Conditional()
+        self._post_IfOrWhile()
 
     def post_While(self):
-        self._post_Conditional()
+        self._post_IfOrWhile()
 
 
     def pre_orelse_name(self):
@@ -141,6 +142,7 @@ class FunctionModule:
         self.num_args = 0
         self.cfg = None
         self.cf_input = {}
+        self.bnum_type = {}
         self.whole_source = ''
 
         for node in ast.walk(self.whole_ast):
@@ -157,8 +159,10 @@ class FunctionModule:
         code_injection_walk = CodeInjectionTreeWalk()
         code_injection_walk.walk(self.fun_node)
         self.cfg = code_injection_walk.cfg
-        
-        self.cfg.store_recursive(self.cf_input)
+        self.bnum_type = code_injection_walk.bnum_type
+        for bnum in self.bnum_type.keys():
+            self.cf_input[(bnum, True)] = None
+            self.cf_input[(bnum, False)] = None
 
         self.whole_source = compile(self.whole_ast, '', 'exec')
 
@@ -172,7 +176,7 @@ class FunctionModule:
 
     def get_cfg_string_with_cf_input(self):
         result_list = [' *']
-        self.cfg.get_string_with_cf_dict_recursive(self.cf_input, '', result_list)
+        self.cfg.get_string_with_cf_dict_recursive(self.cf_input, self.bnum_type, '', result_list)
         return '\n'.join(result_list)
 
     def get_cf_input_string_sorted_items(self):

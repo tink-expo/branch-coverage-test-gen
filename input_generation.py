@@ -38,6 +38,7 @@ class InputGeneration:
             print(redirected_stdout.getvalue())
         else:
             sys.stdout = original_stdout
+            
             if print_cf_input:
                 print(fun_obj_genned.get_cf_input_string_sorted_items())
             if print_cfg:
@@ -61,9 +62,4 @@ class InputGeneration:
                 print('=' * 60)
 
         print('Input generated for {} functions.'.format(fun_count))
-
-if __name__=="__main__":
-    ig = InputGeneration(sys.argv[1], (-1000, 1000), 100, 100)
-    ig.all_fun_input_generate(True, True)
-    # ig.fun_name_input_generate('f', True, True)
             

@@ -35,31 +35,19 @@ class AvmSearch:
             fitness_decr = self._eval_input_fitness(vector, vector_idx, x - 1)
             fitness_incr = self._eval_input_fitness(vector, vector_idx, x + 1)
 
-            # fitness.print_all()
-            # fitness_decr.print_all()
-            # fitness_incr.print_all()
-            # print('-' * 100)
-
             if fitness <= fitness_decr and fitness <= fitness_incr:
                 break
 
             k = 1 if fitness_decr > fitness_incr else -1
             while True:
                 fitness_next = self._eval_input_fitness(vector, vector_idx, x + k)
-                # print(x, k)
-                # fitness.print_all()
-                # fitness_next.print_all()
-                # print('=' * 100)
 
                 if fitness_next >= fitness:
-                    # print(x, k)
-                    # print('-' * 100)
                     break
                 else:
                     x = x + k
                     k = 2 * k
                     fitness = copy.copy(fitness_next)
-        # print('=' * 100)
         vector[vector_idx] = x
         return vector, fitness
 

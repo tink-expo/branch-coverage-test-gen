@@ -15,8 +15,13 @@ if __name__ == "__main__":
                 if fun_obj.cf_input[cf_key] is None:
                     avm_obj = AvmSearch(fun_obj, *cf_key, random_range, search_max_iter=100, optimize_max_iter=100)
                     vec, fit = avm_obj.optimize()
-                    print(cf_key, vec, fit)
-                else:
-                    print(cf_key, fun_obj.cf_input[cf_key])
+                #     print(cf_key, vec, fit)
+                # else:
+                #     print(cf_key, fun_obj.cf_input[cf_key])
+
+            for k, v in sorted(fun_obj.cf_input.items()):
+                print('{}{} {}'.format(k[0], 'T' if k[1] else 'F', v))
+            print()
+            fun_obj.cfg.print_with_cf_dict_recursive(fun_obj.cf_input, '')
 
             

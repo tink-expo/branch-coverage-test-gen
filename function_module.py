@@ -2,6 +2,7 @@ import ast
 import astor
 import copy
 import sys
+import termcolor
 
 class CFNode:
     def __init__(self, branch_number, boolean):
@@ -23,6 +24,25 @@ class CFNode:
         for child in self.children:
             cf_dict[child.get_key()] = None
             child.store_recursive(cf_dict)
+
+    def get_key_string(self):
+        return "{}{}".format(self.branch_number, 'T' if self.boolean else 'F')
+
+    def get_key_string_with_cf_dict(self, cf_dict):
+        cf_dict_val = cf_dict.get(self.get_key())
+        if cf_dict_val is not None:
+            return termcolor.colored(self.get_key_string(), 'green') + ': ' + str(cf_dict_val)
+        else:
+            return termcolor.colored(self.get_key_string(), 'red')
+
+    def print_with_cf_dict_recursive(self, cf_dict, front_string):
+        for i in range(len(self.children)):
+            add_string = ' |-- ' if i < len(self.children) - 1 else ' +-- '
+            add_front_string = ' |   ' if i < len(self.children) - 1 else '     '
+            child = self.children[i]
+            print(front_string + add_string + str(child.get_key_string_with_cf_dict(cf_dict)) + '\n')
+            child.print_with_cf_dict_recursive(cf_dict, front_string + add_front_string)
+    
 
 class CFPathFind:
     def _find(self, node, target_branch_number, target_boolean):

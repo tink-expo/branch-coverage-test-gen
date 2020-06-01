@@ -152,7 +152,7 @@ class FunctionModule:
 
         self.num_args = len(self.fun_node.args.args)
         if self.num_args == 0:
-            raise ValueError("Function definition with zero arguments.") 
+            raise ValueError("Requested function has no arguments.") 
 
         code_injection_walk = CodeInjectionTreeWalk()
         code_injection_walk.walk(self.fun_node)
@@ -179,7 +179,9 @@ class FunctionModule:
         result = ''
         for cf_key, cf_val in sorted(self.cf_input.items(), 
                 key=lambda item : 2 * item[0][0] + int(not item[0][1])):
-            result += '{}: {}\n\n'.format(CFNode.get_key_string(cf_key), '-' if cf_val is None else ', '.join(map(str, cf_val)))
+            result += '{}: {}\n\n'.format(
+                    CFNode.get_key_string(cf_key), 
+                    '-' if cf_val is None else ', '.join(map(str, cf_val)))
         return result
             
 

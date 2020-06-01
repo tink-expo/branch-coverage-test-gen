@@ -40,6 +40,7 @@ class Fitness:
 
 
 # Calculate fitness and record evaled cfs
+# NOTE: This mutates fun_obj (Modifies fun_obj.cf_input)
 class FunctionEval:
 
     def __init__(self, fun_obj, target_branch_number, target_boolean):
@@ -53,9 +54,13 @@ class FunctionEval:
 
     def get_input_fitness(self, input_list):
         hook_pred = HookPredicate()
-        exec(self.fun_obj.whole_source, locals())
-        fun_call_source = self.fun_obj.fun_node.name + str(tuple(input_list))
-        eval(fun_call_source)
+        try:
+            exec(self.fun_obj.whole_source, locals())
+            fun_call_source = self.fun_obj.fun_node.name + str(tuple(input_list))
+            eval(fun_call_source)
+        except:
+            # Exception thrown during executing user code should be catched.
+            pass
 
         for cf_key in hook_pred.cf_evaled.keys():
             assert(cf_key in self.fun_obj.cf_input)
@@ -71,4 +76,4 @@ class FunctionEval:
             if branch_distance is not None:
                 return Fitness(branch_distance, approach_level)
 
-        return INF
+        return Fitness(0, INF)

@@ -56,8 +56,9 @@ class InputGeneration:
         for node in self.whole_ast.body:
             if isinstance(node, ast.FunctionDef):
                 fun_count += 1
-                print('Function < {} >'.format(node.name))
+                print('Function < {} >\n'.format(node.name))
                 self.fun_node_input_generate(node, print_cf_input, print_cfg)
+                print('=' * 60)
 
         print('Input generated for {} functions.'.format(fun_count))
 

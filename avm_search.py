@@ -52,7 +52,7 @@ class AvmSearch:
         return vector, fitness
 
     def _alternating_variable_search(self, vector):
-        fitness = function_eval.INF
+        fitness = function_eval.Fitness(0, function_eval.INF)
 
         for i in range(max(len(vector), self.variable_max_iter)):
             vector_idx = i % len(vector)
@@ -64,7 +64,7 @@ class AvmSearch:
 
     def optimize(self):
         vector = None
-        fitness = function_eval.INF
+        fitness = function_eval.Fitness(0, function_eval.INF)
 
         for _ in range(self.optimize_max_iter):
             vector, fitness = self._alternating_variable_search(self._get_random_vector())

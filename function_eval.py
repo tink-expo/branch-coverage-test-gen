@@ -47,6 +47,10 @@ class FunctionEval:
         self.target_branch_number = target_branch_number
         self.target_boolean = target_boolean
 
+        self.reversed_target_path = self.fun_obj.get_target_path(
+                self.target_branch_number, self.target_boolean)
+        self.reversed_target_path.reverse()
+
     def get_input_fitness(self, input_list):
         hook_pred = HookPredicate()
         exec(self.fun_obj.whole_source, locals())
@@ -61,12 +65,8 @@ class FunctionEval:
             if cf_key == (self.target_branch_number, self.target_boolean):
                 return Fitness(0, 0)
 
-        reversed_target_path = self.fun_obj.get_target_path(
-            self.target_branch_number, self.target_boolean)
-        reversed_target_path.reverse()
-
-        for approach_level in range(len(reversed_target_path)):
-            path_node, path_boolean = reversed_target_path[approach_level].get_key()
+        for approach_level in range(len(self.reversed_target_path)):
+            path_node, path_boolean = self.reversed_target_path[approach_level].get_key()
             branch_distance = hook_pred.cf_evaled.get((path_node, not path_boolean))
             if branch_distance is not None:
                 return Fitness(branch_distance, approach_level)

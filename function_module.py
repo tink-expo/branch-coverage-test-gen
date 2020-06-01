@@ -13,11 +13,9 @@ class CFNode:
     def get_key(self):
         return (self.branch_number, self.boolean)
 
-    # Except root
-    def print_recursive(self, indent):
-        for child in self.children:
-            print('  ' * indent + str(child.get_key()))
-            child.print_recursive(indent + 1)
+    @staticmethod
+    def get_key_string(cf_key):
+        return "{}{}".format(cf_key[0], 'T' if cf_key[1] else 'F')
 
     # Except root
     def store_recursive(self, cf_dict):
@@ -25,23 +23,30 @@ class CFNode:
             cf_dict[child.get_key()] = None
             child.store_recursive(cf_dict)
 
-    def get_key_string(self):
-        return "{}{}".format(self.branch_number, 'T' if self.boolean else 'F')
+    # Except root
+    def get_string_recursive(self, indent, result):
+        for child in self.children:
+            result.append('  ' * indent + str(child.get_key()))
+            child.get_string_recursive(indent + 1, result)
 
-    def get_key_string_with_cf_dict(self, cf_dict):
-        cf_dict_val = cf_dict.get(self.get_key())
-        if cf_dict_val is not None:
-            return termcolor.colored(self.get_key_string(), 'green') + ': ' + str(cf_dict_val)
-        else:
-            return termcolor.colored(self.get_key_string(), 'red')
-
-    def print_with_cf_dict_recursive(self, cf_dict, front_string):
+    # Except root
+    def get_string_with_cf_dict_recursive(self, cf_dict, front_string, result):
         for i in range(len(self.children)):
             add_string = ' |-- ' if i < len(self.children) - 1 else ' +-- '
             add_front_string = ' |   ' if i < len(self.children) - 1 else '     '
             child = self.children[i]
-            print(front_string + add_string + str(child.get_key_string_with_cf_dict(cf_dict)) + '\n')
-            child.print_with_cf_dict_recursive(cf_dict, front_string + add_front_string)
+            result.append(front_string + add_string + str(child._get_key_string_with_cf_dict(cf_dict)) + '\n')
+            child.get_string_with_cf_dict_recursive(cf_dict, front_string + add_front_string, result)
+
+    def _get_key_string(self):
+        return CFNode.get_key_string(self.get_key())
+
+    def _get_key_string_with_cf_dict(self, cf_dict):
+        cf_dict_val = cf_dict.get(self.get_key())
+        if cf_dict_val is not None:
+            return termcolor.colored(self._get_key_string(), 'green') + ': ' + str(cf_dict_val)
+        else:
+            return termcolor.colored(self._get_key_string(), 'red')
     
 
 class CFPathFind:
@@ -160,19 +165,24 @@ class FunctionModule:
     def get_target_path(self, target_branch_number, target_boolean):
         return CFPathFind().find(self.cfg, target_branch_number, target_boolean)
 
+    def get_cfg_string(self):
+        result_list = []
+        self.cfg.get_string_recursive(0, result_list)
+        return '\n'.join(result_list)
 
+    def get_cfg_string_with_cf_input(self):
+        result_list = [' *\n']
+        self.cfg.get_string_with_cf_dict_recursive(self.cf_input, '', result_list)
+        return '\n'.join(result_list)
 
-if __name__ == "__main__":
-    aa = astor.code_to_ast.parse_file(sys.argv[1])
-    for node in aa.body:
-        if isinstance(node, ast.FunctionDef) and node.name == sys.argv[2]:
-            fp = FunctionModule(aa, node.name)
-            print(astor.to_source(fp.whole_ast))
-            fp.cfg.print_recursive(0)
-            for n in fp.cf_input:
-                print(n)
-            # for n in fp.get_target_path(5, True):
-            #     print(n.get_key())
+    def get_cf_input_string_sorted_items(self):
+        result = ''
+        for cf_key, cf_val in sorted(self.cf_input.items(), 
+                key=lambda item : 2 * item[0][0] + int(not item[0][1])):
+            result += '{}: {}\n\n'.format(CFNode.get_key_string(cf_key), '-' if cf_val is None else ', '.join(map(str, cf_val)))
+        return result
+            
+
     
 
 

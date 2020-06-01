@@ -5,11 +5,11 @@ import copy
 # Reference : avmf
 class AvmSearch:
     def __init__(self, fun_obj, target_branch_number, target_boolean,
-            random_range, search_max_iter=100, optimize_max_iter=100):
+            random_range, variable_max_iter, optimize_max_iter):
         random.seed(0)
         self.fun_num_args = fun_obj.num_args
         self.fun_eval = function_eval.FunctionEval(fun_obj, target_branch_number, target_boolean)
-        self.search_max_iter = search_max_iter
+        self.variable_max_iter = variable_max_iter
         self.optimize_max_iter = optimize_max_iter
         self.random_range = random_range
     
@@ -54,7 +54,7 @@ class AvmSearch:
     def _alternating_variable_search(self, vector):
         fitness = function_eval.INF
 
-        for i in range(max(len(vector), self.search_max_iter)):
+        for i in range(max(len(vector), self.variable_max_iter)):
             vector_idx = i % len(vector)
             vector, fitness = self._variable_search(vector, vector_idx)
             if fitness.is_zero():

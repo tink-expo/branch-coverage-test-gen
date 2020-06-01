@@ -29,7 +29,7 @@ class CFNode:
             add_string = ' |-- ' if i < len(self.children) - 1 else ' +-- '
             add_front_string = ' |   ' if i < len(self.children) - 1 else '     '
             child = self.children[i]
-            result.append(front_string + add_string + str(child._get_key_string_with_cf_dict(cf_dict, bnum_type)) + '\n')
+            result.append(front_string + add_string + str(child._get_key_string_with_cf_dict(cf_dict, bnum_type)))
             child.get_string_with_cf_dict_recursive(cf_dict, bnum_type, front_string + add_front_string, result)
 
     def _get_key_string(self):
@@ -175,18 +175,26 @@ class FunctionModule:
         return '\n'.join(result_list)
 
     def get_cfg_string_with_cf_input(self):
-        result_list = [' *']
+        result_list = []
         self.cfg.get_string_with_cf_dict_recursive(self.cf_input, self.bnum_type, '', result_list)
-        return '\n'.join(result_list)
+        return ' *\n' + '\n\n'.join(result_list)
 
     def get_cf_input_string_sorted_items(self):
-        result = ''
+        result_list = []
         for cf_key, cf_val in sorted(self.cf_input.items(), 
                 key=lambda item : 2 * item[0][0] + int(not item[0][1])):
-            result += '{}: {}\n\n'.format(
+            result_list.append('{}: {}'.format(
                     CFNode.get_key_string(cf_key), 
-                    '-' if cf_val is None else ', '.join(map(str, cf_val)))
-        return result
+                    '-' if cf_val is None else ', '.join(map(str, cf_val))))
+        return '\n'.join(result_list)
+
+    def get_input_set(self):
+        input_set = set(self.cf_input.values())
+        input_set.discard(None)
+        return input_set
+
+    def get_num_branches(self):
+        return len(self.bnum_type)
             
 
     

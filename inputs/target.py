@@ -35,3 +35,12 @@ def g(x):
                 pass
         else:
             pass
+
+def a(x):
+    return x
+
+def b(x):
+    if a(x) < 2:
+        pass
+    elif a(x) > 3:
+        pass

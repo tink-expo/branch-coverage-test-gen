@@ -4,7 +4,9 @@ import copy
 
 # Reference : avmf
 class AvmSearch:
-    def __init__(self, fun_obj, target_branch_number, target_boolean,
+    def __init__(self,
+            fun_obj, target_branch_number, target_boolean,
+            precision,
             random_range, variable_max_iter, optimize_max_iter):
         random.seed(0)
         self.fun_num_args = fun_obj.num_args
@@ -12,15 +14,19 @@ class AvmSearch:
         self.variable_max_iter = variable_max_iter
         self.optimize_max_iter = optimize_max_iter
         self.random_range = random_range
+        self.precision = precision
     
     def _get_random_vector(self):
         return [random.randint(*self.random_range) 
             for _ in range(self.fun_num_args)]
 
+    def _get_eval_vector(self, vector):
+        return [e / self.precision for e in vector]
+
     def _eval_input_fitness(self, vector, vector_idx, x):
         old_x = vector[vector_idx]
         vector[vector_idx] = x
-        fitness = self.fun_eval.get_input_fitness(vector)
+        fitness = self.fun_eval.get_input_fitness(self._get_eval_vector(vector))
         vector[vector_idx] = old_x
         return fitness
 

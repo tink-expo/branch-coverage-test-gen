@@ -4,6 +4,7 @@ from input_generation import InputGeneration
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('file_path', type=str)
+    parser.add_argument('precision', type=int)
     parser.add_argument('-f', '--function_name', type=str, default=None)
 
     parser.add_argument('--input_low', type=int, default=-1000)
@@ -16,7 +17,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    input_gen = InputGeneration(args.file_path, 
+    input_gen = InputGeneration(args.file_path,
+            args.precision,
             (args.input_low, args.input_high), 
             args.optimize_max_iter, args.variable_max_iter)
     

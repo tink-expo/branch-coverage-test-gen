@@ -7,7 +7,7 @@ from function_module import FunctionModule
 from avm_search import AvmSearch
 
 class InputGeneration:
-    def __init__(self, file_path, 
+    def __init__(self, file_path, precision,
             avm_random_range, avm_variable_max_iter, avm_optimize_max_iter):
         try:
             self.whole_ast = astor.code_to_ast.parse_file(file_path)
@@ -15,6 +15,7 @@ class InputGeneration:
             print(e)
             exit(0)
         else:
+            self.precision = precision
             self.avm_random_range = avm_random_range
             self.avm_variable_max_iter = avm_variable_max_iter
             self.avm_optimize_max_iter = avm_optimize_max_iter
@@ -28,7 +29,7 @@ class InputGeneration:
         fun_obj = FunctionModule(self.whole_ast, fun_node.name)
         for cf_key in fun_obj.cf_input.keys():
             if fun_obj.cf_input[cf_key] is None:
-                avm_obj = AvmSearch(fun_obj, *cf_key,
+                avm_obj = AvmSearch(fun_obj, *cf_key, self.precision,
                         self.avm_random_range, self.avm_variable_max_iter, self.avm_optimize_max_iter)
                 avm_obj.optimize()
 

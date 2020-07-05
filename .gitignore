@@ -1,6 +1,4 @@
-.DS_Store
-
-cs453-SBST-master
+**.DS_Store
 py-feat-test
 **/__pycache__
 /*_test.py

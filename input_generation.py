@@ -39,8 +39,11 @@ class InputGeneration:
         src_ast = ast.parse('import {}'.format(self.module_name))
         for fun_name, input_set in self.fun_name_input.items():
             test_fun_src = ['def test_{}():'.format(fun_name)]
-            for input_tup in input_set:
-                test_fun_src.append('{}.{}{}'.format(self.module_name, fun_name, input_tup))
+            if len(input_set) > 0:
+                for input_tup in input_set:
+                    test_fun_src.append('{}.{}{}'.format(self.module_name, fun_name, input_tup))
+            else:
+                test_fun_src.append('pass')
             src_ast.body.append(ast.parse(('\n' + ' ' * 4).join(test_fun_src)))
 
         testfile_name = '{}_test.py'.format(self.module_name.split('.')[-1])
@@ -102,4 +105,3 @@ class InputGeneration:
             testfile_name = self.write_testfile_from_input()
             print('Test file generated. Run \'$ pytest {}\' to run the tests.'.format(testfile_name))
         print()
-            

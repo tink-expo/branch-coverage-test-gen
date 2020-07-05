@@ -3,7 +3,8 @@ Search-based test input generation for python source, aiming high branch coverag
 Coursework for CS453 Automated Software Testing, Spring 2020, KAIST
 
 ## About
-This project is a search-based test input generator for python source. It aims for high branch coverage, and uses Alternating Variable Method (AVM) search.
+This project is a search-based test input generator for python source. It aims for high branch coverage, and uses Alternating Variable Method (AVM) search.  
+`inputs/sample*.py` files are provided from the [course by KAIST COINSE lab](https://coinse.kaist.ac.kr/teaching/2020/cs453/).
 
 ## Usage
 Prerequisite: python3 (Tested with python 3.7.5)
@@ -50,7 +51,8 @@ Function < f >
 
 ### Pretty-print of branch graph and coverage.
 If the branch is covered, it is printed in green with generated input. Otherwise, it is printed in red. Example is as below.
-<img src="screenshots/branch_graph.png" width="40%"></br>
+
+<img src="screenshots/branch_graph.png" width="30%"></br>
 
 ### Test file generation.
 After running this tool on a target source `($FNAME).py`, a file name `($FNAME)_test.py` is generated. Example is as below, where the target source consists of 3 functions.
@@ -60,6 +62,7 @@ Input generated for 3 functions.
 Test file generated. Run '$ pytest target_test.py' to run the tests.
 ```
 By running `$ pytest target_test.py`, error exception can be detected by testing. The generation doesn't put expected return value, but the user can easily add assertion in the generated file.
+
 <img src="screenshots/pytest.png" width="70%"></br>
 
 
